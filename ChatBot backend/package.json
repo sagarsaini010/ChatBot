@@ -1,0 +1,15 @@
+{
+  "name": "chatbot-backend",
+  "version": "1.0.0",
+  "description": "AI chatbot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "AI",
+    "CHATBOT"
+  ],
+  "author": "SAGAR,WILLIAM,BHAKTI,AKASH",
+  "license": "ISC"
+}
