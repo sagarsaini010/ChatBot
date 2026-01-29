@@ -2,14 +2,24 @@
   "name": "chatbot-backend",
   "version": "1.0.0",
   "description": "AI chatbot",
-  "main": "index.js",
+  "main": "server.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon server.js",
+    "start": "node server.js"
   },
   "keywords": [
     "AI",
     "CHATBOT"
   ],
   "author": "SAGAR,WILLIAM,BHAKTI,AKASH",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^1.38.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "mongoose": "^9.1.5",
+    "morgan": "^1.10.1"
+  }
 }
