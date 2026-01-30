@@ -4,8 +4,8 @@ import morgan from "morgan";
 
 // import authRoutes from "./routes/auth.routes.js";
 // import guestRoutes from "./routes/guest.routes.js";
-// import chatRoutes from "./routes/chat.routes.js";
-// import sessionRoutes from "./routes/session.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
+import sessionRoutes from "./routes/session.routes.js";
 
 // import { errorHandler } from "./middleware/error.middleware.js";
 
@@ -34,8 +34,8 @@ app.get("/health", (req, res) => {
 /* ---------- Routes ---------- */
 // app.use("/api/auth", authRoutes);       // login / register
 // app.use("/api/guest", guestRoutes);     // guest start / clear
-// app.use("/api/chat", chatRoutes);       // chat messages
-// app.use("/api/sessions", sessionRoutes);// chat windows
+app.use("/api/chat", chatRoutes);       // chat messages
+app.use("/api/sessions", sessionRoutes);// chat windows
 
 /* ---------- 404 Handler ---------- */
 app.use((req, res) => {
