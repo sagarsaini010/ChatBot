@@ -6,25 +6,26 @@ export default function Input() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
 
-const handleSend = async () => {
-  if (!message.trim()) return;
 
-  const currentMessage = message; // backup
-  setMessage(""); // ✅ input turant empty
-  setMessages((prev) => [...prev, currentMessage]);
-  setLoading(true);
+ const handleSend = async () => {
+    if (!message.trim()) return;
 
-  try {
-    await fetch("http://localhost:5000/api/message", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: currentMessage }),
-    });
-  } catch (error) {
-    console.error("Error sending message", error);
-  } finally {
-    setLoading(false);
-  }
+    const currentMessage = message; // backup
+    setMessage(""); // ✅ input turant empty
+    setMessages((prev) => [...prev, currentMessage]);
+    setLoading(true);
+
+   try {
+       await fetch("http://localhost:5000/api/chat/send", {
+       method: "POST",
+       headers: { "Content-Type": "application/json" },
+       body: JSON.stringify({ text: currentMessage }),
+     });
+      } catch (error) {
+           console.error("Error sending message", error);
+       } finally {
+        setLoading(false);
+       }
 };
 
 

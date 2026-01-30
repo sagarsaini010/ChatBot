@@ -19,11 +19,11 @@ export default function Login() {
     }
 
     setError("");
-    alert("Login Successful ✅");
+    alert("Login Successful");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-indigo-500 to-purple-600">
       <form
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-xl shadow-lg w-[90%] max-w-md"
