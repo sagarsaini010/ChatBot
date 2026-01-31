@@ -5,7 +5,7 @@ import {
   deleteSession,
 } from "../controllers/session.controller.js";
 import { guestMiddleware } from "../middleware/guest.middleware.js";
-// import { authMiddleware } from "../middleware/auth.middleware.js";
+import { authMiddleware } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
@@ -16,6 +16,7 @@ const router = express.Router();
 router.post(
   "/",
   guestMiddleware,
+  authMiddleware,
   createSession
 );
 
@@ -25,6 +26,7 @@ router.post(
 router.get(
   "/",
   guestMiddleware,
+  authMiddleware,
   getSessions
 );
 
@@ -34,6 +36,7 @@ router.get(
 router.delete(
   "/:sessionId",
   guestMiddleware,
+  authMiddleware,
   deleteSession
 );
 

@@ -12,12 +12,12 @@ const messageSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      default: null, // guest ke liye null
+      default: null, 
     },
 
     guestId: {
       type: String,
-      default: null, // logged-in user ke liye null
+      default: null, 
     },
 
     role: {
