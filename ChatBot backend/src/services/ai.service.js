@@ -5,21 +5,50 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 export const generateAIReply = async (context) => {
-  try {
-    console.log("AI CONTEXT:", JSON.stringify(context, null, 2));
+  const safeContext = context
+    .filter((m) => m?.parts?.[0]?.text)
+    .map((m) => ({
+      role: m.role === "model" ? "model" : "user",
+      parts: [{ text: m.parts[0].text }],
+    }));
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: context,
+  if (!safeContext.length) {
+    safeContext.push({
+      role: "user",
+      parts: [{ text: "Hello" }],
     });
+  }
 
-    console.log("AI RAW RESPONSE:", response);
+  const MAX_RETRIES = 3;
 
-    return response.text;
-  } catch (error) {
-    console.error("GEMINI FULL ERROR:", error);
-    throw error; // original error throw karo
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: safeContext,
+      });
+
+      return response.text;
+    } catch (error) {
+      const status = error?.status;
+
+      console.error(
+        `Gemini error (attempt ${attempt}/${MAX_RETRIES})`,
+        status,
+        error.message
+      );
+
+      // Retry only for overload / internal errors
+      if ((status === 500 || status === 503) && attempt < MAX_RETRIES) {
+        await sleep(1000 * attempt); // exponential backoff
+        continue;
+      }
+
+      // Final graceful fallback
+      return "⚠️ The AI is busy right now. Please try again in a few moments.";
+    }
   }
 };
-

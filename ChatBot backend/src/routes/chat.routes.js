@@ -1,6 +1,6 @@
 import express from "express";
 import { sendMessage } from "../controllers/chat.controller.js";
-// import { authMiddleware } from "../middleware/auth.middleware.js";
+import { authMiddleware } from "../middleware/auth.middleware.js";
 import { guestMiddleware } from "../middleware/guest.middleware.js";
 
 const router = express.Router();
@@ -14,7 +14,7 @@ const router = express.Router();
 router.post(
   "/send",
   guestMiddleware,     // sets req.guestId if guest
-                      // sets req.user if logged-in
+  authMiddleware,      // sets req.user if logged-in
   sendMessage
 );
 
