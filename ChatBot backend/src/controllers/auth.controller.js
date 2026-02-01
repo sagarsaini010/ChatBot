@@ -56,3 +56,13 @@ export const loginUser = async (req, res, next) => {
     next(error);
   }
 };
+
+// Note: Logout is typically handled on the client side by deleting the token.
+export const logoutUser = async (req, res, next) => {
+  try {
+    // For JWT, there's no server-side logout unless using a token blacklist. 
+    res.status(200).json({ success: true, message: "Logout successful" });
+  } catch (error) {
+    next(error);
+  }
+};
