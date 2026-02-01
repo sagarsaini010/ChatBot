@@ -1,14 +1,16 @@
-import React from 'react'
-import Input from './components/Input'
-import ChatPage from './components/ChatContainer'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import ChatPage from "./components/ChatContainer";
 
-const App = () => {
+export default function App() {
   return (
-    <div className="">
-      {/* <Input /> */}
-      <ChatPage/>
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<ChatPage />} />   {/* ✅ Guest allowed */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
-
-export default App

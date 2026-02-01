@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-export default function Login() {
+export default function Signup() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -9,10 +10,15 @@ export default function Login() {
 
   const navigate = useNavigate();
 
-  //  LOGIN FUNCTION
-  const handleLogin = async () => {
-    if (!email || !password) {
-      setError("Email and password are required");
+  //  SIGNUP FUNCTION
+  const handleSignup = async () => {
+    if (!name || !email || !password) {
+      setError("All fields are required");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
       return;
     }
 
@@ -20,32 +26,27 @@ export default function Login() {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      const guestId = localStorage.getItem("guestId");
+
+      await fetch("http://localhost:5000/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(guestId && { "x-guest-id": guestId }),
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, email, password }),
       });
 
       const result = await res.json();
 
       if (!result.success) {
-        setError(result.error || "Login failed");
+        setError(result.error || "Signup failed");
         setLoading(false);
         return;
       }
 
-      //  Save token
-      localStorage.setItem("token", result.token);
-
-      //  Save user (if backend bhej raha hai)
-      if (result.user) {
-        localStorage.setItem("user", JSON.stringify(result.user));
-      }
-
-      //  Redirect to chat
-      navigate("/");
+      //  Signup success → login page
+      navigate("/login");
     } catch (err) {
       setError("Server error");
     } finally {
@@ -55,12 +56,20 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black">
-      <div className="bg-white p-8 rounded-xl w-87.5">
-        <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+      <div className="bg-white p-8 rounded-xl w-96">
+        <h2 className="text-2xl font-bold mb-6 text-center">Signup</h2>
 
         {error && (
           <p className="text-red-500 text-sm mb-3 text-center">{error}</p>
         )}
+
+        <input
+          type="text"
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full mb-3 px-4 py-2 border rounded-lg"
+        />
 
         <input
           type="email"
@@ -77,24 +86,24 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              handleLogin();
+              handleSignup();
             }
           }}
           className="w-full mb-4 px-4 py-2 border rounded-lg"
         />
 
         <button
-          onClick={handleLogin}
+          onClick={handleSignup}
           disabled={loading}
           className="w-full bg-green-500 text-white py-2 rounded-lg disabled:opacity-50"
         >
-          {loading ? "Logging in..." : "Login"}
+          {loading ? "Creating account..." : "Signup"}
         </button>
 
         <p className="text-sm mt-4 text-center">
-          Don’t have an account?{" "}
-          <Link to="/signup" className="text-green-600 font-medium">
-            Signup
+          Already have an account?{" "}
+          <Link to="/login" className="text-green-600 font-medium">
+            Login
           </Link>
         </p>
       </div>
