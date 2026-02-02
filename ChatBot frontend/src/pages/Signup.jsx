@@ -10,10 +10,15 @@ export default function Signup() {
 
   const navigate = useNavigate();
 
-  //  SIGNUP FUNCTION
+  // 🟢 SIGNUP + AUTO LOGIN
   const handleSignup = async () => {
     if (!name || !email || !password) {
       setError("All fields are required");
+      return;
+    }
+
+    if (!email.includes("@")) {
+      setError("Enter a valid email");
       return;
     }
 
@@ -28,25 +33,35 @@ export default function Signup() {
     try {
       const guestId = localStorage.getItem("guestId");
 
-      await fetch("http://localhost:5000/api/auth/register", {
+      const res = await fetch("http://localhost:5000/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(guestId && { "x-guest-id": guestId }),
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          password,
+        }),
       });
 
       const result = await res.json();
 
       if (!result.success) {
         setError(result.error || "Signup failed");
-        setLoading(false);
         return;
       }
 
-      //  Signup success → login page
-      navigate("/login");
+      // ✅ AUTO LOGIN
+      localStorage.setItem("token", result.token);
+      localStorage.setItem("user", JSON.stringify(result.user));
+
+      // guest cleanup
+      localStorage.removeItem("guestId");
+
+      // 🔥 direct chat page
+      navigate("/");
     } catch (err) {
       setError("Server error");
     } finally {
@@ -56,6 +71,14 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black">
+      <button
+        onClick={() => navigate("/")}
+        className="absolute top-4 right-4 text-gray-500 hover:text-white     text-xl"
+        title="Close"
+      >
+        ✕
+      </button>
+
       <div className="bg-white p-8 rounded-xl w-96">
         <h2 className="text-2xl font-bold mb-6 text-center">Signup</h2>
 
@@ -85,9 +108,7 @@ export default function Signup() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleSignup();
-            }
+            if (e.key === "Enter") handleSignup();
           }}
           className="w-full mb-4 px-4 py-2 border rounded-lg"
         />
@@ -100,7 +121,8 @@ export default function Signup() {
           {loading ? "Creating account..." : "Signup"}
         </button>
 
-        <p className="text-sm mt-4 text-center">
+        {/* Optional: keep link or remove */}
+        <p className="text-sm mt-4 text-center text-gray-600">
           Already have an account?{" "}
           <Link to="/login" className="text-green-600 font-medium">
             Login

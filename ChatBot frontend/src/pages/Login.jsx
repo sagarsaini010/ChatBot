@@ -55,6 +55,14 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black">
+      <button
+        onClick={() => navigate("/")}
+        className="absolute top-4 right-4 text-gray-500 hover:text-white text-xl"
+        title="Close"
+      >
+        ✕
+      </button>
+
       <div className="bg-white p-8 rounded-xl w-87.5">
         <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
 

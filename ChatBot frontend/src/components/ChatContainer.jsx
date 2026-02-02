@@ -12,15 +12,20 @@ export default function ChatPage() {
 
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
+  const displayName = user?.name || "Guest";
 
-  // Logout
+  // 🔐 LOGOUT (NO redirect)
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login");
+    localStorage.removeItem("guestId");
+
+    setMessages([]);
+    setSessionId(null);
+    // ❌ no navigate here
   };
 
-  // Create session (guest OR logged-in)
+  // 🧠 CREATE SESSION (guest or logged-in)
   useEffect(() => {
     const createSession = async () => {
       try {
@@ -33,7 +38,7 @@ export default function ChatPage() {
         });
 
         const guestId = res.headers.get("x-guest-id");
-        if (guestId) {
+        if (guestId && !token) {
           localStorage.setItem("guestId", guestId);
         }
 
@@ -49,7 +54,7 @@ export default function ChatPage() {
     createSession();
   }, [token]);
 
-  // Send message
+  // 💬 SEND MESSAGE
   const handleSend = async () => {
     if (!input.trim() || !sessionId) return;
 
@@ -64,9 +69,9 @@ export default function ChatPage() {
     setIsTyping(true);
 
     try {
-      const guestId = localStorage.getItem("guestId");
+      const guestId = token ? null : localStorage.getItem("guestId");
 
-      await fetch("http://localhost:5000/api/chat/send", {
+      const res = await fetch("http://localhost:5000/api/chat/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -82,7 +87,7 @@ export default function ChatPage() {
       const result = await res.json();
       setIsTyping(false);
 
-      if (result.success) {
+      if (result.success && result.data?.reply) {
         setMessages((prev) => [
           ...prev,
           {
@@ -100,44 +105,52 @@ export default function ChatPage() {
 
   return (
     <div className="h-screen flex flex-col bg-black text-white">
-      {/* 🔝 ChatGPT-style Minimal Header */}
+      {/* 🔝 HEADER */}
       <div className="flex items-center justify-between px-4 py-2 bg-[#1f1f1f] border-b border-gray-800">
-        {/* Left: Model selector pill */}
-        <div className="flex items-center gap-2">
-          <div className="px-3 py-1 rounded-lg bg-[#2a2a2a] text-sm text-gray-200 cursor-pointer hover:bg-[#333]">
-            ChatGPT 5.2 ▾
-          </div>
+        {/* Left: User / Guest */}
+        <div className="px-3 py-1 rounded-lg bg-[#2a2a2a] text-sm tracking-wider">
+          {displayName.toUpperCase()}
         </div>
 
-        {/* Right: icons only */}
+        {/* Right: Buttons */}
         <div className="flex items-center gap-4 text-gray-400">
-          {/* Account icon */}
-          <button
-            onClick={() => {
-              if (!user) navigate("/login");
-            }}
-            title={user ? user.name : "Login"}
-            className="hover:text-white"
-          >
-            👤
-          </button>
+          {/* Login – only when Guest */}
+          {!user && (
+            <button
+              onClick={() => navigate("/login")}
+              title="Login"
+              className="hover:text-white"
+            >
+              👤
+            </button>
+          )}
 
-          {/* New chat / refresh */}
+          {/* Logout – only when logged in */}
+          {user && (
+            <button
+              onClick={handleLogout}
+              title="Logout"
+              className="hover:text-white"
+            >
+              Logout
+            </button>
+          )}
+
+          {/* New Chat */}
           <button
             onClick={() => {
               setMessages([]);
               setSessionId(null);
-              window.location.reload();
             }}
             title="New chat"
             className="hover:text-white"
           >
-            🔄
+            +
           </button>
         </div>
       </div>
 
-      {/* 💬 Messages */}
+      {/* 💬 MESSAGES */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg) => (
           <div
@@ -158,7 +171,6 @@ export default function ChatPage() {
           </div>
         ))}
 
-        {/* ⌨️ Typing indicator */}
         {isTyping && (
           <div className="flex justify-start">
             <div className="px-4 py-2 rounded-2xl text-sm bg-gray-200 text-gray-600 italic">
@@ -168,7 +180,7 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* ⌨️ Input */}
+      {/* ⌨️ INPUT */}
       <div className="border-t border-gray-800 p-3 flex items-center gap-2">
         <input
           type="text"
