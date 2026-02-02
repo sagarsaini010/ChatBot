@@ -1,5 +1,4 @@
 import { chatService } from "../services/chat.service.js";
-
 export const sendMessage = async (req, res, next) => {
   try {
     const { message, sessionId } = req.body;
@@ -11,9 +10,8 @@ export const sendMessage = async (req, res, next) => {
       });
     }
 
-    const userId = req.user?.id || null;
+    const userId = req.userId || null;
     const guestId = req.guestId || null;
-
     const reply = await chatService.sendMessage({
       message,
       sessionId,

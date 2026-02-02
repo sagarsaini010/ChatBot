@@ -9,7 +9,7 @@ export const createSession = async (req, res, next) => {
   try {
     const { title } = req.body;
 
-    const userId = req.user?.id || null;
+    const userId = req.userId || null;
     const guestId = req.guestId || null;
 
     const session = await ChatSession.create({
