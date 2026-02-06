@@ -35,9 +35,11 @@ export const createSession = async (req, res, next) => {
  */
 export const getSessions = async (req, res, next) => {
   try {
-    const userId = req.user?.id || null;
-    const guestId = req.guestId || null;
+    console.log("Body:", req.body);
 
+    const userId = req.body.userId || null;
+    const guestId = req.body.guestId || null;
+       console.log("Debug IDs:", { userId, guestId }); // Check karein console mein kya aa raha hai
     const filter = userId
       ? { userId }
       : { guestId };
@@ -69,8 +71,8 @@ export const deleteSession = async (req, res, next) => {
       });
     }
 
-    const userId = req.user?.id || null;
-    const guestId = req.guestId || null;
+    const userId = req.body.userId || null;
+    const guestId = req.body.guestId || null;
 
     const filter = {
       _id: sessionId,
@@ -93,6 +95,42 @@ export const deleteSession = async (req, res, next) => {
       success: true,
       message: "Chat session deleted successfully",
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const getSessionMessages = async (req, res, next) => {
+  try {
+    const { sessionId } = req.params;
+    const userId = req.body.userId || null;
+    const guestId = req.body.guestId || null;
+
+    console.log("IDs:", { userId, guestId, sessionId });
+
+    // 1. Verify session
+    const sessionExists = await ChatSession.findOne({
+      _id: sessionId,
+      ...(userId ? { userId } : { guestId }),
+    });
+
+    if (!sessionExists) {
+      return res.status(404).json({
+        success: false,
+        error: "Session not found",
+      });
+    }
+
+    // 2. Get messages
+    const messages = await Message.find({ sessionId })
+      .sort({ createdAt: 1 });
+
+    res.status(200).json({
+      success: true,
+      data: messages,
+    });
+
   } catch (error) {
     next(error);
   }

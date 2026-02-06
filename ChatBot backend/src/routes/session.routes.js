@@ -3,10 +3,10 @@ import {
   createSession,
   getSessions,
   deleteSession,
+  getSessionMessages
 } from "../controllers/session.controller.js";
 import { guestMiddleware } from "../middleware/guest.middleware.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
-
 const router = express.Router();
 
 /**
@@ -39,5 +39,12 @@ router.delete(
   authMiddleware,
   deleteSession
 );
+
+
+router.get("/:sessionId/messages",
+  guestMiddleware,
+  authMiddleware,
+  getSessionMessages);
+
 
 export default router;

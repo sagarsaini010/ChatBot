@@ -12,6 +12,7 @@ export const sendMessage = async (req, res, next) => {
 
     const userId = req.userId || null;
     const guestId = req.guestId || null;
+    console.log("sendMessage IDs:", { userId, guestId });
     const reply = await chatService.sendMessage({
       message,
       sessionId,
