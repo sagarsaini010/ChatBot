@@ -9,6 +9,9 @@ export const chatService = {
     if (!session) {
       throw new Error("Chat session not found");
     }
+    console.log("Session found:", sessionId);
+    console.log("User ID:", userId);
+    console.log("Guest ID:", guestId);
 
     // Save user message
     await Message.create({
