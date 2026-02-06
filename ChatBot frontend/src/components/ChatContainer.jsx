@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
 
@@ -9,23 +9,20 @@ export default function ChatPage() {
   const [isTyping, setIsTyping] = useState(false);
 
   const navigate = useNavigate();
+  const bottomRef = useRef(null);
 
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
   const displayName = user?.name || "Guest";
 
-  // 🔐 LOGOUT (NO redirect)
+  /* 🔐 LOGOUT */
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("guestId");
-
+    localStorage.clear();
     setMessages([]);
     setSessionId(null);
-    // ❌ no navigate here
   };
 
-  // 🧠 CREATE SESSION (guest or logged-in)
+  /* 🧠 CREATE SESSION */
   useEffect(() => {
     const createSession = async () => {
       try {
@@ -54,7 +51,27 @@ export default function ChatPage() {
     createSession();
   }, [token]);
 
-  // 💬 SEND MESSAGE
+  /* 🔽 AUTO SCROLL */
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isTyping]);
+
+  /* ⚡ STREAM HELPER */
+  const streamText = (fullText, onUpdate, speed = 1) => {
+    let index = 0;
+
+    const interval = setInterval(() => {
+      index++;
+      onUpdate(fullText.slice(0, index));
+
+      if (index >= fullText.length) {
+        clearInterval(interval);
+        setIsTyping(false);
+      }
+    }, speed);
+  };
+
+  /* 💬 SEND MESSAGE */
   const handleSend = async () => {
     if (!input.trim() || !sessionId) return;
 
@@ -85,17 +102,24 @@ export default function ChatPage() {
       });
 
       const result = await res.json();
-      setIsTyping(false);
 
       if (result.success && result.data?.reply) {
+        const botId = Date.now() + 1;
+
+        // empty bot bubble
         setMessages((prev) => [
           ...prev,
-          {
-            id: Date.now() + 1,
-            sender: "bot",
-            text: result.data.reply,
-          },
+          { id: botId, sender: "bot", text: "" },
         ]);
+
+        // stream text
+        streamText(result.data.reply, (chunk) => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === botId ? { ...m, text: chunk } : m
+            )
+          );
+        });
       }
     } catch (err) {
       setIsTyping(false);
@@ -104,103 +128,99 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-black text-white">
+    <div className="h-screen flex flex-col bg-[#222] text-white">
       {/* 🔝 HEADER */}
-      <div className="flex items-center justify-between px-4 py-2 bg-[#1f1f1f] border-b border-gray-800">
-        {/* Left: User / Guest */}
-        <div className="px-3 py-1 rounded-lg bg-[#2a2a2a] text-sm tracking-wider">
-          {displayName.toUpperCase()}
-        </div>
+      <div className="flex items-center justify-between px-6 py-3 bg-[#1f1f1f] border-b border-gray-800">
+        <button
+          onClick={() => {
+            setMessages([]);
+            setSessionId(null);
+          }}
+          className="text-sm text-gray-300 hover:text-white"
+        >
+          + New Chat
+        </button>
 
-        {/* Right: Buttons */}
-        <div className="flex items-center gap-4 text-gray-400">
-          {/* Login – only when Guest */}
+        <div className="flex items-center gap-4">
           {!user && (
             <button
               onClick={() => navigate("/login")}
-              title="Login"
-              className="hover:text-white"
+              className="text-sm text-gray-300 hover:text-white"
             >
-              👤
+              Login
             </button>
           )}
-
-          {/* Logout – only when logged in */}
           {user && (
             <button
               onClick={handleLogout}
-              title="Logout"
-              className="hover:text-white"
+              className="text-sm text-gray-300 hover:text-white"
             >
               Logout
             </button>
           )}
-
-          {/* New Chat */}
-          <button
-            onClick={() => {
-              setMessages([]);
-              setSessionId(null);
-            }}
-            title="New chat"
-            className="hover:text-white"
-          >
-            +
-          </button>
         </div>
       </div>
 
       {/* 💬 MESSAGES */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto py-6 space-y-6">
         {messages.map((msg) => (
           <div
             key={msg.id}
             className={`flex ${
               msg.sender === "user" ? "justify-end" : "justify-start"
-            }`}
+            } max-w-4xl mx-auto px-3`}
           >
             <div
-              className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm shadow ${
-                msg.sender === "user"
-                  ? "bg-green-500 text-white rounded-br-none"
-                  : "bg-white text-gray-800 rounded-bl-none"
-              }`}
+              className={`px-4 py-3 rounded-2xl text-sm shadow whitespace-pre-wrap
+                ${
+                  msg.sender === "user"
+                    ? "bg-green-500 text-white rounded-br-none"
+                    : "bg-[#383737] text-white rounded-bl-none"
+                }
+                max-w-[85%] sm:max-w-[75%] md:max-w-[65%]
+              `}
             >
               <ReactMarkdown>{msg.text}</ReactMarkdown>
+              {isTyping && msg.sender === "bot" && (
+                <span className="animate-pulse ml-1">▍</span>
+              )}
             </div>
           </div>
         ))}
 
-        {isTyping && (
-          <div className="flex justify-start">
-            <div className="px-4 py-2 rounded-2xl text-sm bg-gray-200 text-gray-600 italic">
-              Bot is typing...
-            </div>
-          </div>
-        )}
+        <div ref={bottomRef} />
       </div>
 
       {/* ⌨️ INPUT */}
-      <div className="border-t border-gray-800 p-3 flex items-center gap-2">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
-          placeholder="Type a message..."
-          className="flex-1 bg-black border border-gray-700 text-white rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-        <button
-          onClick={handleSend}
-          className="bg-green-500 text-white px-5 py-2 rounded-full text-sm hover:bg-green-600"
-        >
-          Send
-        </button>
+      <div className="border-t border-gray-800 py-4 bg-black">
+        <div className="max-w-4xl mx-auto px-3 flex items-center gap-2">
+          <div className="hidden sm:block px-3 py-1 rounded-lg bg-[#2a2a2a] text-xs tracking-wider">
+            {displayName.toUpperCase()}
+          </div>
+
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            placeholder="Message ChatGPT..."
+            className="flex-1 bg-[#111] border border-gray-700 text-white
+                       rounded-2xl px-4 py-3 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+
+          <button
+            onClick={handleSend}
+            className="bg-green-500 text-white px-4 py-3 rounded-xl text-sm hover:bg-green-600"
+          >
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );
