@@ -26,12 +26,21 @@ export default function Sidebar({
   };
 
   return (
-    <div className="flex flex-col h-full p-4 bg-[#111]">
+    <div className="flex flex-col h-full p-4 bg-[#0b0b0c]">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <div className="text-xs uppercase tracking-[0.2em] text-gray-500">
+            Workspace
+          </div>
+          <div className="text-lg font-semibold text-gray-100">ChatBot</div>
+        </div>
+      </div>
+
       <button
         onClick={onNewChat}
-        className="mb-4 border border-gray-700 rounded-lg px-3 py-2 text-sm hover:bg-[#1f1f1f]"
+        className="mb-5 border border-[#2a2a2a] rounded-xl px-3 py-2 text-sm bg-[#141414] text-gray-200 hover:bg-[#1d1d1d] transition"
       >
-        + New Chat
+        + New chat
       </button>
 
       <div className="text-xs text-gray-400 mb-2">Chats</div>
@@ -47,7 +56,7 @@ export default function Sidebar({
             <div
               key={s.id}
               className={`group relative flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer
-                ${s.id === currentSessionId ? "bg-[#1f1f1f]" : "hover:bg-[#1f1f1f]"}`}
+                ${s.id === currentSessionId ? "bg-[#161616]" : "hover:bg-[#151515]"}`}
               onClick={() => onSelect(s.id)}
             >
               <span className="flex-1 truncate text-sm">{s.title}</span>
@@ -61,10 +70,10 @@ export default function Sidebar({
               </button>
 
               {openMenuId === s.id && (
-                <div className="absolute right-2 top-10 bg-[#2a2a2a] border border-gray-700 rounded-lg shadow-lg z-50 py-1 min-w-[120px]">
+                <div className="absolute right-2 top-10 bg-[#1b1b1b] border border-[#2a2a2a] rounded-lg shadow-lg z-50 py-1 min-w-[120px]">
                   <button
                     onClick={(e) => handleDelete(e, s.id)}
-                    className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-[#1f1f1f] flex items-center gap-2"
+                    className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-[#151515] flex items-center gap-2"
                   >
                      Delete
                   </button>

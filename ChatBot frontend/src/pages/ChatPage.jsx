@@ -18,6 +18,12 @@ export default function ChatPage() {
 const getRandomQuote = () => quotes[Math.floor(Math.random() * quotes.length)];
 const [randomQuote, setRandomQuote] = useState(getRandomQuote());
 
+  const quickPrompts = [
+    "Draft a friendly email to a client about project updates.",
+    "Summarize the key points from a long article for me.",
+    "Help me brainstorm ideas for a new side project.",
+    "Explain a complex topic in simple terms.",
+  ];
 
 
 
@@ -284,7 +290,7 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
   };
 
  return (
-  <div className="h-screen flex bg-[#222] text-white">
+  <div className="h-screen flex bg-[#0f0f10] text-gray-100">
     {/* 🔥 MOBILE SIDEBAR - CONDITIONAL RENDER */}
     {showSidebar && (
       <>
@@ -295,7 +301,7 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
         />
         
         {/* Sidebar */}
-        <aside className="fixed left-0 top-0 h-full w-64 bg-[#111] border-r border-gray-800 z-50 md:hidden">
+    <aside className="fixed left-0 top-0 h-full w-72 bg-[#0b0b0c] border-r border-[#1f1f1f] z-50 md:hidden">
           <Sidebar
             sessions={sessions}
             currentSessionId={currentSessionId}
@@ -315,7 +321,7 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
     )}
 
     {/* 🔥 DESKTOP SIDEBAR - ALWAYS VISIBLE */}
-    <aside className="hidden md:block w-64 border-r border-gray-800">
+    <aside className="hidden md:block w-72 border-r border-[#1f1f1f] bg-[#0b0b0c]">
       <Sidebar
         sessions={sessions}
         currentSessionId={currentSessionId}
@@ -326,7 +332,7 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
       />
     </aside>
 
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col bg-gradient-to-b from-[#0f0f10] via-[#121212] to-[#0b0b0b]">
       <ChatHeader
         user={user}
         onNewChat={createNewChat}
@@ -335,11 +341,30 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
       />
 
       {messages.length === 0 ? (
-  <div className="flex-1 flex items-center justify-center">
-    <h1 className="text-3xl md:text-4xl font-light text-gray-300 text-center">
-      {isLoadingMessages ? "Loading chat..." : randomQuote}
-    </h1>
-  </div>
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto px-6 pt-14 pb-12 text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#171717] border border-[#262626] text-xl">
+              ✨
+            </div>
+            <h1 className="mt-6 text-3xl md:text-4xl font-semibold text-white">
+              How can I help you today?
+            </h1>
+            <p className="mt-3 text-gray-400">
+              {isLoadingMessages ? "Loading chat..." : randomQuote}
+            </p>
+            <div className="mt-8 grid gap-3 sm:grid-cols-2 text-left">
+              {quickPrompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  onClick={() => setInput(prompt)}
+                  className="p-4 rounded-2xl bg-[#141414] border border-[#232323] text-sm text-gray-200 hover:bg-[#1b1b1b] transition"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 ) : (
   <MessageList messages={messages} bottomRef={messagesEndRef} />
 )}

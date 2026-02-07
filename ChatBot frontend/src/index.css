@@ -7,15 +7,14 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont;
-  /* background: #212121;   ChatGPT main bg */
-  /* color: #ececec; */
+  background: #0f0f10;
+  color: #ececec;
 }
 
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  /* background: #3f3f46; */
+  background: #2a2a2a;
   border-radius: 4px;
 }
-

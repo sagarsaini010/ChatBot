@@ -1,20 +1,15 @@
 export default function ChatInput({ input, setInput, onSend }) {
   const handleSend = () => {
-    console.log('Send clicked, input:', input);
-    console.log('onSend function:', onSend);
     if (onSend) {
       onSend();
-    } else {
-      console.error('onSend is not defined!');
     }
   };
 
   return (
-    <div className="border-t border-gray-800 bg-[#222]">
-      <div className="max-w-4xl mx-auto px-4 py-4">
-        <div className="flex items-center gap-2 bg-[#2f2f2f] rounded-full px-4 py-2">
-
-          <input
+    <div className="border-t border-[#1f1f1f] bg-[#0f0f10]">
+      <div className="max-w-3xl mx-auto px-4 py-5">
+        <div className="flex items-end gap-3 bg-[#151515] border border-[#252525] rounded-3xl px-4 py-3">
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -23,17 +18,21 @@ export default function ChatInput({ input, setInput, onSend }) {
                 handleSend();
               }
             }}
-            placeholder="Ask anything"
-            className="flex-1 bg-transparent outline-none text-white"
+            placeholder="Message ChatBot..."
+            rows={1}
+            className="flex-1 resize-none bg-transparent outline-none text-sm text-gray-100 placeholder:text-gray-500"
           />
 
           <button
             onClick={handleSend}
-            className="bg-white text-black rounded-full px-4 py-2 hover:bg-gray-200"
+            disabled={!input.trim()}
+            className="bg-white text-black rounded-full px-4 py-2 text-sm font-medium hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             Send
           </button>
-
+        </div>
+        <div className="mt-2 text-xs text-gray-500 text-center">
+          Press Enter to send, Shift + Enter for a new line.
         </div>
       </div>
     </div>
