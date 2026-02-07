@@ -9,47 +9,46 @@ export default function ChatHeader({
   const navigate = useNavigate();
 
   return (
-    <div className="flex items-center justify-between
-      px-6 py-3 bg-[#1f1f1f] border-b border-gray-800"
-    >
+    <div className="flex items-center justify-between px-6 py-4 bg-[#0f0f10] border-b border-[#1f1f1f]">
       {/* LEFT - User Name / Guest */}
       <div className="flex items-center gap-3">
         {/* ☰ Mobile sidebar button */}
         <button
           onClick={onMenu}
-          className="md:hidden text-xl text-gray-300 hover:text-white"
+          className="md:hidden text-xl text-gray-300 hover:text-white transition"
         >
           ☰
         </button>
 
-        {/* 🔥 USER NAME / GUEST */}
-        <div className="text-lg  font-bold text-gray-300">
-          {user ? user.name || user.email : "Guest"}
+        <div>
+          <div className="text-sm text-gray-400">ChatBot</div>
+          <div className="text-base font-semibold text-gray-100">
+            {user ? user.name || user.email : "Guest"}
+          </div>
         </div>
       </div>
 
       {/* RIGHT */}
       <div className="flex items-center gap-4">
-        {/* New Chat Button */}
-        {/* <button
+        <button
           onClick={onNewChat}
-          className="text-sm text-gray-300 hover:text-white"
+          className="hidden sm:inline-flex items-center gap-2 text-sm px-3 py-2 rounded-full border border-[#2a2a2a] bg-[#141414] text-gray-200 hover:bg-[#1d1d1d] transition"
         >
-          + New Chat
-        </button> */}
+          + New chat
+        </button>
 
         {/* Login / Logout */}
         {!user ? (
           <button
             onClick={() => navigate("/login")}
-            className="text-sm px-2 py-1 cursor-pointer active:scale-95 text-black rounded-2xl hover:text-[tomato] bg-white "
+            className="text-sm px-4 py-2 cursor-pointer active:scale-95 text-black rounded-full hover:bg-gray-200 bg-white transition"
           >
             Login
           </button>
         ) : (
           <button
             onClick={onLogout}
-            className="text-sm px-2 py-1 cursor-pointer active:scale-95 text-black rounded-2xl hover:text-[tomato] bg-white"
+            className="text-sm px-4 py-2 cursor-pointer active:scale-95 text-black rounded-full hover:bg-gray-200 bg-white transition"
           >
             Logout
           </button>
