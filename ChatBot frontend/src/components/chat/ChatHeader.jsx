@@ -4,7 +4,7 @@ export default function ChatHeader({
   user,
   onNewChat,
   onLogout,
-  onMenu,        // 👈 sidebar toggle (mobile)
+  onMenu,
 }) {
   const navigate = useNavigate();
 
@@ -12,7 +12,7 @@ export default function ChatHeader({
     <div className="flex items-center justify-between
       px-6 py-3 bg-[#1f1f1f] border-b border-gray-800"
     >
-      {/* LEFT */}
+      {/* LEFT - User Name / Guest */}
       <div className="flex items-center gap-3">
         {/* ☰ Mobile sidebar button */}
         <button
@@ -22,30 +22,34 @@ export default function ChatHeader({
           ☰
         </button>
 
-        {/* New chat */}
-        <button
-          onClick={onNewChat}
-          className="text-sm text-gray-300 hover:text-white"
-        >
-          + New Chat
-        </button>
+        {/* 🔥 USER NAME / GUEST */}
+        <div className="text-lg  font-bold text-gray-300">
+          {user ? user.name || user.email : "Guest"}
+        </div>
       </div>
 
       {/* RIGHT */}
       <div className="flex items-center gap-4">
-        {!user && (
+        {/* New Chat Button */}
+        {/* <button
+          onClick={onNewChat}
+          className="text-sm text-gray-300 hover:text-white"
+        >
+          + New Chat
+        </button> */}
+
+        {/* Login / Logout */}
+        {!user ? (
           <button
             onClick={() => navigate("/login")}
-            className="text-sm text-gray-300 hover:text-white"
+            className="text-sm px-2 py-1 cursor-pointer active:scale-95 text-black rounded-2xl hover:text-[tomato] bg-white "
           >
             Login
           </button>
-        )}
-
-        {user && (
+        ) : (
           <button
             onClick={onLogout}
-            className="text-sm text-gray-300 hover:text-white"
+            className="text-sm px-2 py-1 cursor-pointer active:scale-95 text-black rounded-2xl hover:text-[tomato] bg-white"
           >
             Logout
           </button>

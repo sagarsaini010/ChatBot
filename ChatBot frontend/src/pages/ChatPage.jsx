@@ -7,101 +7,168 @@ import ChatInput from "../components/chat/ChatInput";
 const API = "http://localhost:5000";
 
 export default function ChatPage() {
-  const [sessions, setSessions] = useState([]);
-  const [currentSessionId, setCurrentSessionId] = useState(null);
-  const [messagesBySession, setMessagesBySession] = useState({});
-  const [input, setInput] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isCreatingSession, setIsCreatingSession] = useState(false);
 
-  const bottomRef = useRef(null);
-  const messages = messagesBySession[currentSessionId] || [];
+  const quotes = [
+  "What's on the agenda today?",
+  "Ask me anything 🚀",
+  "Ready when you are 😎",
+  "Let's build something cool 💡",
+  "Your AI buddy is listening 👂",
+  "What are we solving today?"
+];
+const getRandomQuote = () => quotes[Math.floor(Math.random() * quotes.length)];
+const [randomQuote, setRandomQuote] = useState(getRandomQuote());
 
-  /* AUTO SCROLL */
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
 
-  /* CREATE NEW CHAT (POST /api/sessions) */
-  /* CREATE NEW CHAT (POST /api/sessions) */
-const createNewChat = async () => {
-  if (isCreatingSession) return; // Prevent duplicate calls
+
+
+  // 🔥 LOCALSTORAGE SE LOAD KARO
+  const [sessions, setSessions] = useState(() => {
+    const saved = localStorage.getItem("sessions");
+    return saved ? JSON.parse(saved) : [];
+  });
   
-  try {
-    setIsCreatingSession(true);
-    const res = await fetch(`${API}/api/sessions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        title: "New Chat"
-      })
+  const [currentSessionId, setCurrentSessionId] = useState(null);
+  
+  const [messagesBySession, setMessagesBySession] = useState(() => {
+    const saved = localStorage.getItem("messagesBySession");
+    return saved ? JSON.parse(saved) : {};
+  });
+  
+  const [input, setInput] = useState("");
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
+  
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem("user");
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+
+  const [showSidebar, setShowSidebar] = useState(false);
+
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+  };
+
+  const messages = messagesBySession[currentSessionId] || [];
+  const lastMessage = messages[messages.length - 1];
+
+  const token = localStorage.getItem("token");
+  const isGuest = !user;
+
+  // 🔥 SAVE TO LOCALSTORAGE JAISE HI CHANGE HO
+  useEffect(() => {
+    localStorage.setItem("sessions", JSON.stringify(sessions));
+  }, [sessions]);
+
+  useEffect(() => {
+    localStorage.setItem("messagesBySession", JSON.stringify(messagesBySession));
+  }, [messagesBySession]);
+
+  // CHECK AUTH
+  useEffect(() => {
+    const checkAuth = () => {
+      const savedUser = localStorage.getItem("user");
+      setUser(savedUser ? JSON.parse(savedUser) : null);
+    };
+
+    checkAuth();
+    window.addEventListener("storage", checkAuth);
+    
+    return () => window.removeEventListener("storage", checkAuth);
+  }, []);
+
+  // AUTO SCROLL
+  useEffect(() => {
+    scrollToBottom();
+  }, [lastMessage?.text, messages.length]);
+
+  /* UPDATE SESSION TITLE */
+  const updateSessionTitle = (sessionId, newTitle) => {
+    setSessions((prev) =>
+      prev.map((s) => (s.id === sessionId ? { ...s, title: newTitle } : s))
+    );
+  };
+
+  /* LOGOUT */
+  const handleLogout = () => {
+    localStorage.clear();
+    setUser(null);
+    setSessions([]);
+    setMessagesBySession({});
+    setCurrentSessionId(null);
+  };
+
+  /* SELECT SESSION */
+  const handleSelectSession = (sessionId) => {
+    setCurrentSessionId(sessionId);
+  };
+
+  /* DELETE SESSION */
+  const handleDeleteSession = (sessionId) => {
+    setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+    setMessagesBySession((prev) => {
+      const updated = { ...prev };
+      delete updated[sessionId];
+      return updated;
     });
     
-    const data = await res.json();
-    
-    // ✅ data.data.sessionId (nested object)
-    const sessionId = data.data?.sessionId || data.sessionId;
-    
-    if (!sessionId) {
-      console.error("No sessionId in response:", data);
-      return null;
-    }
-    
-    const session = {
-      id: sessionId,
-      title: data.data?.title || data.title || "New Chat",
-    };
-    
-    setSessions((prev) => [session, ...prev]);
-    setMessagesBySession((prev) => ({
-      ...prev,
-      [session.id]: [],
-    }));
-    setCurrentSessionId(session.id);
-    setSidebarOpen(false);
-    
-    return session.id; // Return the new session ID
-  } catch (err) {
-    console.error("Create session error:", err);
-    return null;
-  } finally {
-    setIsCreatingSession(false);
-  }
-};
-
-  /* SELECT SESSION → LOAD MESSAGES */
-  const selectSession = async (sessionId) => {
-    try {
-      setCurrentSessionId(sessionId);
-
-      const res = await fetch(
-        `${API}/api/sessions/${sessionId}/messages`
-      );
-      const msgs = await res.json();
-
-      setMessagesBySession((prev) => ({
-        ...prev,
-        [sessionId]: msgs,
-      }));
-    } catch (err) {
-      console.error("Load messages error:", err);
+    if (sessionId === currentSessionId) {
+      setCurrentSessionId(null);
     }
   };
 
-  /* SEND MESSAGE (POST /api/chat/send) */
+  /* CREATE NEW CHAT */
+  const createNewChat = async () => {
+    if (isCreatingSession) return null;
+    setIsCreatingSession(true);
+    setRandomQuote(getRandomQuote());
+    // Guest mode - local session
+    if (isGuest) {
+      const guestSessionId = `guest-${Date.now()}`;
+      setSessions((p) => [{ id: guestSessionId, title: "New Chat" }, ...p]);
+      setMessagesBySession((p) => ({ ...p, [guestSessionId]: [] }));
+      setCurrentSessionId(guestSessionId);
+      setIsCreatingSession(false);
+      return guestSessionId;
+    }
+
+    // Logged in - backend call
+    try {
+      const res = await fetch(`${API}/api/sessions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title: "New Chat" }),
+      });
+
+      const data = await res.json();
+      const sessionId = data.data?.sessionId || data.sessionId;
+
+      setSessions((p) => [{ id: sessionId, title: "New Chat" }, ...p]);
+      setMessagesBySession((p) => ({ ...p, [sessionId]: [] }));
+      setCurrentSessionId(sessionId);
+
+      setIsCreatingSession(false);
+      return sessionId;
+    } catch (err) {
+      console.error("Create session failed:", err);
+      setIsCreatingSession(false);
+      return null;
+    }
+  };
+
+  /* SEND MESSAGE */
   const sendMessage = async () => {
     if (!input.trim()) return;
-    
-    // Agar session nahi hai, to pehle create karo
+
     let sessionId = currentSessionId;
     if (!sessionId) {
       sessionId = await createNewChat();
-      if (!sessionId) {
-        console.error("Failed to create session");
-        return;
-      }
+      if (!sessionId) return;
     }
 
     const userMsg = {
@@ -110,132 +177,160 @@ const createNewChat = async () => {
       text: input,
     };
 
-    // Optimistic UI update
-    setMessagesBySession((prev) => ({
-      ...prev,
+    setMessagesBySession((p) => ({
+      ...p,
+      [sessionId]: [...(p[sessionId] || []), userMsg],
+    }));
+
+    // FIRST MESSAGE = TITLE UPDATE
+    const currentMessages = messagesBySession[sessionId] || [];
+    const isFirstMessage = currentMessages.length === 0;
+    
+    if (isFirstMessage) {
+      const newTitle = input.trim().slice(0, 40) + (input.length > 40 ? "..." : "");
+      updateSessionTitle(sessionId, newTitle);
+    }
+
+    setInput("");
+
+    const botMsgId = Date.now() + 1;
+
+    setMessagesBySession((p) => ({
+      ...p,
       [sessionId]: [
-        ...(prev[sessionId] || []),
-        userMsg,
+        ...(p[sessionId] || []),
+        {
+          id: botMsgId,
+          sender: "bot",
+          text: "",
+          thinking: true,
+        },
       ],
     }));
 
-    setInput("");
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    if (!isGuest && token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
 
     try {
       const res = await fetch(`${API}/api/chat/send`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
-          sessionId: sessionId,
+          sessionId,
           message: userMsg.text,
         }),
       });
 
       const result = await res.json();
-
-      if (result?.data?.reply) {
+      const reply = result?.data?.reply || result?.reply;
+      
+      if (!reply) {
         setMessagesBySession((prev) => ({
           ...prev,
-          [sessionId]: [
-            ...(prev[sessionId] || []),
-            {
-              id: Date.now(),
-              sender: "bot",
-              text: result.data.reply,
-            },
-          ],
+          [sessionId]: prev[sessionId].filter((msg) => msg.id !== botMsgId),
         }));
+        return;
       }
+
+      let index = 0;
+
+      const interval = setInterval(() => {
+        index++;
+
+        setMessagesBySession((prev) => ({
+          ...prev,
+          [sessionId]: prev[sessionId].map((msg) =>
+            msg.id === botMsgId
+              ? {
+                  ...msg,
+                  text: reply.slice(0, index),
+                  thinking: false,
+                }
+              : msg
+          ),
+        }));
+
+        if (index >= reply.length) {
+          clearInterval(interval);
+        }
+      }, 25);
     } catch (err) {
-      console.error("Send message error:", err);
+      console.error("Send message failed:", err);
+      setMessagesBySession((prev) => ({
+        ...prev,
+        [sessionId]: prev[sessionId].filter((msg) => msg.id !== botMsgId),
+      }));
     }
   };
 
-  /* DELETE SESSION */
-  const deleteSession = async (sessionId) => {
-    try {
-      await fetch(`${API}/api/sessions/${sessionId}`, {
-        method: "DELETE",
-      });
-
-      setSessions((prev) =>
-        prev.filter((s) => s.id !== sessionId)
-      );
-
-      setMessagesBySession((prev) => {
-        const copy = { ...prev };
-        delete copy[sessionId];
-        return copy;
-      });
-
-      if (currentSessionId === sessionId) {
-        setCurrentSessionId(null);
-      }
-    } catch (err) {
-      console.error("Delete session error:", err);
-    }
-  };
-
-  /* INIT FIRST CHAT - page load pe ek default chat banao */
-  useEffect(() => {
-    if (sessions.length === 0 && !isCreatingSession) {
-      createNewChat();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return (
-    <div className="h-screen flex bg-[#222] text-white">
-
-      {/* DESKTOP SIDEBAR */}
-      <aside className="hidden md:block w-64 border-r border-gray-800">
-        <Sidebar
-          sessions={sessions}
-          currentSessionId={currentSessionId}
-          onSelect={selectSession}
-          onNewChat={createNewChat}
-          onDelete={deleteSession}
+ return (
+  <div className="h-screen flex bg-[#222] text-white">
+    {/* 🔥 MOBILE SIDEBAR - CONDITIONAL RENDER */}
+    {showSidebar && (
+      <>
+        {/* Backdrop - Click to close */}
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setShowSidebar(false)}
         />
-      </aside>
+        
+        {/* Sidebar */}
+        <aside className="fixed left-0 top-0 h-full w-64 bg-[#111] border-r border-gray-800 z-50 md:hidden">
+          <Sidebar
+            sessions={sessions}
+            currentSessionId={currentSessionId}
+            onSelect={(id) => {
+              handleSelectSession(id);
+              setShowSidebar(false); // 🔥 Select karne par close ho jaye
+            }}
+            onNewChat={() => {
+              createNewChat();
+              setShowSidebar(false); // 🔥 New chat par close ho jaye
+            }}
+            onDelete={handleDeleteSession}
+          />
+        </aside>
+      </>
+    )}
 
-      {/* MOBILE SIDEBAR */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 md:hidden">
-          <aside className="w-64 h-full bg-[#111]">
-            <Sidebar
-              sessions={sessions}
-              currentSessionId={currentSessionId}
-              onSelect={(id) => {
-                selectSession(id);
-                setSidebarOpen(false);
-              }}
-              onNewChat={createNewChat}
-              onDelete={deleteSession}
-            />
-          </aside>
-        </div>
-      )}
+    {/* 🔥 DESKTOP SIDEBAR - ALWAYS VISIBLE */}
+    <aside className="hidden md:block w-64 border-r border-gray-800">
+      <Sidebar
+        sessions={sessions}
+        currentSessionId={currentSessionId}
+        onSelect={handleSelectSession}
+        onNewChat={createNewChat}
+        onDelete={handleDeleteSession}
+      />
+    </aside>
 
-      {/* MAIN CHAT */}
-      <div className="flex-1 flex flex-col">
-        <ChatHeader
-          user={null}
-          onNewChat={createNewChat}
-          onLogout={() => {}}
-          onMenu={() => setSidebarOpen(true)}
-        />
+    <div className="flex-1 flex flex-col">
+      <ChatHeader
+        user={user}
+        onNewChat={createNewChat}
+        onLogout={handleLogout}
+        onMenu={() => setShowSidebar(!showSidebar)} // 🔥 Toggle function
+      />
 
-        <MessageList
-          messages={messages}
-          bottomRef={bottomRef}
-        />
+      {messages.length === 0 ? (
+  <div className="flex-1 flex items-center justify-center">
+    <h1 className="text-3xl md:text-4xl font-light text-gray-300 text-center">
+      {randomQuote}
+    </h1>
+  </div>
+) : (
+  <MessageList messages={messages} bottomRef={messagesEndRef} />
+)}
 
-        <ChatInput
-          input={input}
-          setInput={setInput}
-          onSend={sendMessage}
-        />
-      </div>
+
+      <ChatInput input={input} setInput={setInput} onSend={sendMessage} />
     </div>
+  </div>
+
   );
 }

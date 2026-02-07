@@ -1,9 +1,9 @@
 export default function TypingIndicator() {
   return (
-    <div className="flex gap-1 px-4 py-2">
-      <span className="dot" />
-      <span className="dot" />
-      <span className="dot" />
+    <div className="flex gap-1 px-4 py-2" aria-hidden="true">
+      <span className="dot"></span>
+      <span className="dot"></span>
+      <span className="dot"></span>
 
       <style>{`
         .dot {
