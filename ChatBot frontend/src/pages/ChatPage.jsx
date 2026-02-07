@@ -3,8 +3,7 @@ import Sidebar from "../components/sidebar/Sidebar";
 import ChatHeader from "../components/chat/ChatHeader";
 import MessageList from "../components/chat/MessageList";
 import ChatInput from "../components/chat/ChatInput";
-
-const API = "http://localhost:5000";
+import { api } from "../utils/api";
 
 export default function ChatPage() {
 
@@ -22,21 +21,16 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
 
 
 
-  // 🔥 LOCALSTORAGE SE LOAD KARO
-  const [sessions, setSessions] = useState(() => {
-    const saved = localStorage.getItem("sessions");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [sessions, setSessions] = useState([]);
   
   const [currentSessionId, setCurrentSessionId] = useState(null);
   
-  const [messagesBySession, setMessagesBySession] = useState(() => {
-    const saved = localStorage.getItem("messagesBySession");
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [messagesBySession, setMessagesBySession] = useState({});
   
   const [input, setInput] = useState("");
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("user");
@@ -54,18 +48,6 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
   const messages = messagesBySession[currentSessionId] || [];
   const lastMessage = messages[messages.length - 1];
 
-  const token = localStorage.getItem("token");
-  const isGuest = !user;
-
-  // 🔥 SAVE TO LOCALSTORAGE JAISE HI CHANGE HO
-  useEffect(() => {
-    localStorage.setItem("sessions", JSON.stringify(sessions));
-  }, [sessions]);
-
-  useEffect(() => {
-    localStorage.setItem("messagesBySession", JSON.stringify(messagesBySession));
-  }, [messagesBySession]);
-
   // CHECK AUTH
   useEffect(() => {
     const checkAuth = () => {
@@ -78,6 +60,67 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
     
     return () => window.removeEventListener("storage", checkAuth);
   }, []);
+
+  const loadSessions = async () => {
+    setIsLoadingSessions(true);
+    try {
+      const result = await api.getSessions();
+      if (!result.success) {
+        setSessions([]);
+        return;
+      }
+      const normalized = (result.data || []).map((session) => ({
+        id: session._id,
+        title: session.title,
+        lastMessageAt: session.lastMessageAt,
+      }));
+      setSessions(normalized);
+      if (normalized.length > 0 && !currentSessionId) {
+        setCurrentSessionId(normalized[0].id);
+      } else if (normalized.length === 0) {
+        setCurrentSessionId(null);
+      }
+    } catch (error) {
+      console.error("Failed to load sessions:", error);
+      setSessions([]);
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  };
+
+  const loadMessages = async (sessionId) => {
+    if (!sessionId) return;
+    setIsLoadingMessages(true);
+    try {
+      const result = await api.getSessionMessages(sessionId);
+      if (!result.success) {
+        return;
+      }
+      const normalized = (result.data || []).map((message) => ({
+        id: message._id,
+        sender: message.role === "model" ? "bot" : "user",
+        text: message.content,
+      }));
+      setMessagesBySession((prev) => ({
+        ...prev,
+        [sessionId]: normalized,
+      }));
+    } catch (error) {
+      console.error("Failed to load messages:", error);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSessions();
+  }, [user]);
+
+  useEffect(() => {
+    if (!currentSessionId) return;
+    if (messagesBySession[currentSessionId]) return;
+    loadMessages(currentSessionId);
+  }, [currentSessionId, messagesBySession]);
 
   // AUTO SCROLL
   useEffect(() => {
@@ -106,16 +149,22 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
   };
 
   /* DELETE SESSION */
-  const handleDeleteSession = (sessionId) => {
-    setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-    setMessagesBySession((prev) => {
-      const updated = { ...prev };
-      delete updated[sessionId];
-      return updated;
-    });
-    
-    if (sessionId === currentSessionId) {
-      setCurrentSessionId(null);
+  const handleDeleteSession = async (sessionId) => {
+    try {
+      const result = await api.deleteSession(sessionId);
+      if (!result.success) return;
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      setMessagesBySession((prev) => {
+        const updated = { ...prev };
+        delete updated[sessionId];
+        return updated;
+      });
+
+      if (sessionId === currentSessionId) {
+        setCurrentSessionId(null);
+      }
+    } catch (error) {
+      console.error("Delete session failed:", error);
     }
   };
 
@@ -124,28 +173,8 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
     if (isCreatingSession) return null;
     setIsCreatingSession(true);
     setRandomQuote(getRandomQuote());
-    // Guest mode - local session
-    if (isGuest) {
-      const guestSessionId = `guest-${Date.now()}`;
-      setSessions((p) => [{ id: guestSessionId, title: "New Chat" }, ...p]);
-      setMessagesBySession((p) => ({ ...p, [guestSessionId]: [] }));
-      setCurrentSessionId(guestSessionId);
-      setIsCreatingSession(false);
-      return guestSessionId;
-    }
-
-    // Logged in - backend call
     try {
-      const res = await fetch(`${API}/api/sessions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ title: "New Chat" }),
-      });
-
-      const data = await res.json();
+      const data = await api.createSession();
       const sessionId = data.data?.sessionId || data.sessionId;
 
       setSessions((p) => [{ id: sessionId, title: "New Chat" }, ...p]);
@@ -208,25 +237,11 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
       ],
     }));
 
-    const headers = {
-      "Content-Type": "application/json",
-    };
-
-    if (!isGuest && token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
     try {
-      const res = await fetch(`${API}/api/chat/send`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          sessionId,
-          message: userMsg.text,
-        }),
+      const result = await api.sendMessage({
+        sessionId,
+        message: userMsg.text,
       });
-
-      const result = await res.json();
       const reply = result?.data?.reply || result?.reply;
       
       if (!reply) {
@@ -293,6 +308,7 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
               setShowSidebar(false); // 🔥 New chat par close ho jaye
             }}
             onDelete={handleDeleteSession}
+            isLoading={isLoadingSessions}
           />
         </aside>
       </>
@@ -306,6 +322,7 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
         onSelect={handleSelectSession}
         onNewChat={createNewChat}
         onDelete={handleDeleteSession}
+        isLoading={isLoadingSessions}
       />
     </aside>
 
@@ -320,7 +337,7 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
       {messages.length === 0 ? (
   <div className="flex-1 flex items-center justify-center">
     <h1 className="text-3xl md:text-4xl font-light text-gray-300 text-center">
-      {randomQuote}
+      {isLoadingMessages ? "Loading chat..." : randomQuote}
     </h1>
   </div>
 ) : (

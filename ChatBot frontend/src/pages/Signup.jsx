@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { api } from "../utils/api";
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -31,22 +32,11 @@ export default function Signup() {
     setError("");
 
     try {
-      const guestId = localStorage.getItem("guestId");
-
-      const res = await fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(guestId && { "x-guest-id": guestId }),
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
-          password,
-        }),
+      const result = await api.register({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password,
       });
-
-      const result = await res.json();
 
       if (!result.success) {
         setError(result.error || "Signup failed");
