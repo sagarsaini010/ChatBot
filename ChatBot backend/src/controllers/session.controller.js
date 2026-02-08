@@ -71,8 +71,8 @@ export const deleteSession = async (req, res, next) => {
       });
     }
 
-    const userId = req.userId || req.body.userId || null;
-    const guestId = req.guestId || req.body.guestId || null;
+    const userId = req.userId || req.body?.userId || null;
+    const guestId = req.guestId || req.body?.guestId || null;
 
     const filter = {
       _id: sessionId,

@@ -1,5 +1,5 @@
 export const streamText = (fullText, onUpdate, onDone, speed = 1) => {
-  let index = 0;
+  let index = 10;
 
   const interval = setInterval(() => {
     index++;
