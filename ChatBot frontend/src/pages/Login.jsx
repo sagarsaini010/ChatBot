@@ -39,23 +39,25 @@ export default function Login() {
 
     navigate("/");
   } catch (err) {
-    setError("Server error");
+    setError("Server error: " + (err.message || err.toString()));
   } finally {
     setLoading(false);
   }
 };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black">
-      <button
+    <div className="h-screen flex items-center justify-center bg-[#3333] relative px-4">
+      
+
+      <div className="bg-[#222121] absolute  p-8 rounded-xl w-87.5">
+        
+        <button
         onClick={() => navigate("/")}
-        className="absolute top-4 right-4 text-gray-500 hover:text-white text-xl"
+        className="absolute top-4 right-4 text-gray-500  rounded-full hover:text-white text-xl"
         title="Close"
       >
         ✕
       </button>
-
-      <div className="bg-white p-8 rounded-xl w-87.5">
         <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
 
         {error && (

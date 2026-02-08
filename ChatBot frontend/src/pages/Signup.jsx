@@ -53,23 +53,25 @@ export default function Signup() {
       // 🔥 direct chat page
       navigate("/");
     } catch (err) {
-      setError("Server error");
+      setError("Server error: "+ err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black">
-      <button
+    <div className="min-h-screen flex items-center justify-center bg-[#3333]">
+     
+
+      <div className="bg-[#222] absolute p-8 rounded-xl w-96">
+
+         <button
         onClick={() => navigate("/")}
         className="absolute top-4 right-4 text-gray-500 hover:text-white     text-xl"
         title="Close"
       >
         ✕
       </button>
-
-      <div className="bg-white p-8 rounded-xl w-96">
         <h2 className="text-2xl font-bold mb-6 text-center">Signup</h2>
 
         {error && (
@@ -112,7 +114,7 @@ export default function Signup() {
         </button>
 
         {/* Optional: keep link or remove */}
-        <p className="text-sm mt-4 text-center text-gray-600">
+        <p className="text-sm mt-4 text-center text-white">
           Already have an account?{" "}
           <Link to="/login" className="text-green-600 font-medium">
             Login

@@ -37,8 +37,8 @@ export const getSessions = async (req, res, next) => {
   try {
     console.log("Body:", req.body);
 
-    const userId = req.userId || req.body.userId || null;
-    const guestId = req.guestId || req.body.guestId || null;
+    const userId = req.userId || req.body?.userId || null;
+    const guestId = req.guestId || req.body?.guestId || null;
        console.log("Debug IDs:", { userId, guestId }); // Check karein console mein kya aa raha hai
     const filter = userId
       ? { userId }
@@ -71,8 +71,8 @@ export const deleteSession = async (req, res, next) => {
       });
     }
 
-    const userId = req.userId || req.body.userId || null;
-    const guestId = req.guestId || req.body.guestId || null;
+    const userId = req.userId || req.body?.userId || null;
+    const guestId = req.guestId || req.body?.guestId || null;
 
     const filter = {
       _id: sessionId,
