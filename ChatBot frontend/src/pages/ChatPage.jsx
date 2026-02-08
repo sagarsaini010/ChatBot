@@ -332,7 +332,7 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
       />
     </aside>
 
-    <div className="flex-1 flex flex-col bg-gradient-to-b from-[#0f0f10] via-[#121212] to-[#0b0b0b]">
+    <div className="flex-1 flex flex-col bg-linear-to-b from-[#0f0f10] via-[#121212] to-[#0b0b0b]">
       <ChatHeader
         user={user}
         onNewChat={createNewChat}
