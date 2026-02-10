@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
-
+import titleRoutes from "./routes/title.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 // import guestRoutes from "./routes/guest.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
@@ -28,10 +28,10 @@ app.get("/health", (req, res) => {
 
 /* ---------- Routes ---------- */
 app.use("/api/auth", authRoutes);       // login / register
-// app.use("/api/guest", guestRoutes);     // guest start / clear
+// app.use("/api/guest", guestRoutes);  // guest start / clear
 app.use("/api/chat", chatRoutes);       // chat messages
 app.use("/api/sessions", sessionRoutes);// chat windows
-
+app.use("/api/title", titleRoutes);     // title generation
 
 app.use((req, res) => {
   res.status(404).json({
