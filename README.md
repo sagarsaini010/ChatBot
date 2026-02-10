@@ -1,6 +1,6 @@
 # 🤖 AI Chatbot Platform (ChatGPT-like)
 
-A full-stack AI-powered chatbot application that supports **guest and authenticated users**, provides **context-aware conversations**, and ensures **secure, scalable, and reliable chat interactions**.  
+A full-stack Astra AI application that supports **guest and authenticated users**, provides **context-aware conversations**, and ensures **secure, scalable, and reliable chat interactions**.  
 The project is inspired by ChatGPT and focuses on real-world backend architecture and frontend integration.
 
 ---
@@ -41,7 +41,6 @@ The project is inspired by ChatGPT and focuses on real-world backend architectur
 
 ### Frontend
 - React.js
-- Angular (used during internship frontend integration)
 - HTML, CSS, JavaScript (ES6+)
 
 ### Backend
@@ -163,19 +162,6 @@ npm run dev
 ###Server will start at:
 ```
 http://localhost:5000
-```
-
-##🧪 API Testing
-
-Use Postman to test APIs:
-```
-/api/auth/register
-
-/api/auth/login
-
-/api/chat/send
-
-/api/sessions
 ```
 
 ##📊 Key Learnings
