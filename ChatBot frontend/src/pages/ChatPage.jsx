@@ -4,6 +4,7 @@ import ChatHeader from "../components/chat/ChatHeader";
 import MessageList from "../components/chat/MessageList";
 import ChatInput from "../components/chat/ChatInput";
 import { api } from "../utils/api";
+import { streamText } from "../utils/streamText";
 
 export default function ChatPage() {
 
@@ -175,119 +176,127 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
   };
 
   /* CREATE NEW CHAT */
-  const createNewChat = async () => {
-    if (isCreatingSession) return null;
-    setIsCreatingSession(true);
-    setRandomQuote(getRandomQuote());
-    try {
-      const data = await api.createSession();
-      const sessionId = data.data?.sessionId || data.sessionId;
+ const createNewChat = async (initialTitle = "New Chat") => {
+  if (isCreatingSession) return null;
+  
+  // Safety check: Agar initialTitle event object hai toh default set karein
+  const finalTitle = (typeof initialTitle === "string") ? initialTitle : "New Chat";
 
-      setSessions((p) => [{ id: sessionId, title: "New Chat" }, ...p]);
-      setMessagesBySession((p) => ({ ...p, [sessionId]: [] }));
-      setCurrentSessionId(sessionId);
+  setIsCreatingSession(true);
+  setRandomQuote(getRandomQuote());
+  try {
+    // API call mein title bhej rahe hain
+    const data = await api.createSession(finalTitle); 
+    const sessionId = data.data?.sessionId || data.sessionId;
 
-      setIsCreatingSession(false);
-      return sessionId;
-    } catch (err) {
-      console.error("Create session failed:", err);
-      setIsCreatingSession(false);
-      return null;
-    }
-  };
+    // Sidebar list mein turant naya session dikhayein
+    setSessions((p) => [{ id: sessionId, title: finalTitle }, ...p]);
+    setMessagesBySession((p) => ({ ...p, [sessionId]: [] }));
+    setCurrentSessionId(sessionId);
 
-  /* SEND MESSAGE */
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+    setIsCreatingSession(false);
+    return sessionId;
+  } catch (err) {
+    console.error("Create session failed:", err);
+    setIsCreatingSession(false);
+    return null;
+  }
+};
 
-    let sessionId = currentSessionId;
+const generateTitleFromMessage = (text) =>
+  text.slice(0, 40) + (text.length > 40 ? "..." : "");
+
+// send messgae
+ const sendMessage = async () => {
+  if (!input.trim() || isLoadingMessages) return;
+
+  const currentSessionTitle =
+    sessions.find((s) => s.id === currentSessionId)?.title; // ✅ Fixed: s.id instead of s._id
+
+  const userText = input.trim();
+  setIsLoadingMessages(true);
+  setInput("");
+
+  let sessionId = currentSessionId;
+  let shouldUpdateTitle = false;
+
+  // 🟢 CASE 1: new chat (no session)
+  if (!sessionId) {
+    const firstMsgTitle = generateTitleFromMessage(userText);
+    sessionId = await createNewChat(firstMsgTitle);
+
     if (!sessionId) {
-      sessionId = await createNewChat();
-      if (!sessionId) return;
+      setIsLoadingMessages(false);
+      return;
     }
+  }
+  // 🟡 CASE 2: old chat but title still "New Chat"
+  else if (currentSessionTitle === "New Chat") { // ✅ Fixed: removed "vv"
+    shouldUpdateTitle = true;
+  }
 
-    const userMsg = {
-      id: Date.now(),
-      sender: "user",
-      text: input,
-    };
+  const userMsg = { id: Date.now(), sender: "user", text: userText };
+  const botMsgId = Date.now() + 1;
 
-    setMessagesBySession((p) => ({
-      ...p,
-      [sessionId]: [...(p[sessionId] || []), userMsg],
-    }));
+  setMessagesBySession((p) => ({
+    ...p,
+    [sessionId]: [
+      ...(p[sessionId] || []),
+      userMsg,
+      { id: botMsgId, sender: "bot", text: "", thinking: true },
+    ],
+  }));
 
-    // FIRST MESSAGE = TITLE UPDATE
-    const currentMessages = messagesBySession[sessionId] || [];
-    const isFirstMessage = currentMessages.length === 0;
-    
-    if (isFirstMessage) {
-      const newTitle = input.trim().slice(0, 40) + (input.length > 40 ? "..." : "");
-      updateSessionTitle(sessionId, newTitle);
-    }
+  try {
+    const result = await api.sendMessage({
+      sessionId,
+      message: userText,
+    });
 
-    setInput("");
-
-    const botMsgId = Date.now() + 1;
-
-    setMessagesBySession((p) => ({
-      ...p,
-      [sessionId]: [
-        ...(p[sessionId] || []),
-        {
-          id: botMsgId,
-          sender: "bot",
-          text: "",
-          thinking: true,
-        },
-      ],
-    }));
-
-    try {
-      const result = await api.sendMessage({
-        sessionId,
-        message: userMsg.text,
-      });
-      const reply = result?.data?.reply || result?.reply;
-      
-      if (!reply) {
-        setMessagesBySession((prev) => ({
-          ...prev,
-          [sessionId]: prev[sessionId].filter((msg) => msg.id !== botMsgId),
-        }));
-        return;
+    // 🔥 YAHAN title update hota hai
+    if (shouldUpdateTitle) {
+      try { // ✅ Added error handling
+        await api.updateTitle({
+          sessionId,
+          message: generateTitleFromMessage(userText),
+        });
+        loadSessions(); // sidebar refresh
+      } catch (error) {
+        console.error("Title update failed:", error);
       }
+    }
 
-      let index = 0;
+    const reply = result?.data?.reply || result?.reply;
 
-      const interval = setInterval(() => {
-        index++;
-
-        setMessagesBySession((prev) => ({
-          ...prev,
-          [sessionId]: prev[sessionId].map((msg) =>
-            msg.id === botMsgId
-              ? {
-                  ...msg,
-                  text: reply.slice(0, index),
-                  thinking: false,
-                }
-              : msg
-          ),
-        }));
-
-        if (index >= reply.length) {
-          clearInterval(interval);
-        }
-      }, 25);
-    } catch (err) {
-      console.error("Send message failed:", err);
+    if (!reply) {
       setMessagesBySession((prev) => ({
         ...prev,
         [sessionId]: prev[sessionId].filter((msg) => msg.id !== botMsgId),
       }));
+      setIsLoadingMessages(false);
+      return;
     }
-  };
+
+    streamText(
+      reply,
+      (updatedText) => {
+        setMessagesBySession((prev) => ({
+          ...prev,
+          [sessionId]: prev[sessionId].map((msg) =>
+            msg.id === botMsgId
+              ? { ...msg, text: updatedText, thinking: false }
+              : msg
+          ),
+        }));
+      },
+      () => setIsLoadingMessages(false)
+    );
+  } catch (err) {
+    console.error("Send message failed:", err);
+    setIsLoadingMessages(false);
+  }
+};
+
 
  return (
   <div className="h-screen flex bg-[#0f0f10] text-gray-100">
@@ -310,7 +319,7 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
               setShowSidebar(false); // 🔥 Select karne par close ho jaye
             }}
             onNewChat={() => {
-              createNewChat();
+              createNewChat("New Chat");
               setShowSidebar(false); // 🔥 New chat par close ho jaye
             }}
             onDelete={handleDeleteSession}
@@ -326,7 +335,7 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
         sessions={sessions}
         currentSessionId={currentSessionId}
         onSelect={handleSelectSession}
-        onNewChat={createNewChat}
+        onNewChat={()=>createNewChat("New Chat")}
         onDelete={handleDeleteSession}
         isLoading={isLoadingSessions}
       />
@@ -335,7 +344,7 @@ const [randomQuote, setRandomQuote] = useState(getRandomQuote());
     <div className="flex-1 flex flex-col bg-linear-to-b from-[#0f0f10] via-[#121212] to-[#0b0b0b]">
       <ChatHeader
         user={user}
-        onNewChat={createNewChat}
+        onNewChat={()=>createNewChat("New Chat")}
         onLogout={handleLogout}
         onMenu={() => setShowSidebar(!showSidebar)} // 🔥 Toggle function
       />

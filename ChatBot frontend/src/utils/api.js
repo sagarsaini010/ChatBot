@@ -61,14 +61,14 @@ export const api = {
     });
     return response.json();
   },
-  async createSession() {
-    const response = await apiFetch("/api/sessions", {
-      method: "POST",
-      headers: buildHeaders(),
-      body: JSON.stringify({ title: "New Chat" }),
-    });
-    return response.json();
-  },
+ async createSession(title = "New Chat") {
+  const response = await apiFetch("/api/sessions", {
+    method: "POST",
+    headers: buildHeaders(),
+    body: JSON.stringify({ title }), // Dynamic title yahan se jayega
+  });
+  return response.json();
+},
   async getSessions() {
     const response = await apiFetch("/api/sessions", {
       method: "GET",
@@ -98,6 +98,14 @@ export const api = {
     });
     return response.json();
   },
+  async updateTitle({sessionId,message}){
+    const response = await apiFetch("/api/title",{
+      method:"POST",
+      headers: buildHeaders(),
+      body: JSON.stringify({sessionId,title:message})
+    })
+    return response.json();
+  }
 };
 
 export { API_BASE };
