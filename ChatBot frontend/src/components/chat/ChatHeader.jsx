@@ -21,7 +21,7 @@ export default function ChatHeader({
         </button>
 
         <div>
-          <div className="text-sm text-gray-400">ChatBot</div>
+          <div className="text-sm text-gray-400">Astra AI</div>
           <div className="text-base font-semibold text-gray-100">
             {user ? user.name || user.email : "Guest"}
           </div>
