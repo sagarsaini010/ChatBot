@@ -76,7 +76,6 @@ export const deleteSession = async (req, res, next) => {
 
     const filter = {
       _id: sessionId,
-      ...(userId ? { userId } : { guestId }),
     };
 
     const session = await ChatSession.findOneAndDelete(filter);
