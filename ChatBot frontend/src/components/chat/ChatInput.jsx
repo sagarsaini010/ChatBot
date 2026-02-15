@@ -18,9 +18,9 @@ export default function ChatInput({ input, setInput, onSend }) {
                 handleSend();
               }
             }}
-            placeholder="Message ChatBot..."
+            placeholder="Message ChatBot...."
             rows={1}
-            className="flex-1 resize-none bg-transparent outline-none text-sm text-gray-100 placeholder:text-gray-500"
+            className="flex items-center justify-center py-2 resize-none outline-none text-sm text-gray-100 placeholder:text-gray-500 bg-transparent w-full"
           />
 
           <button

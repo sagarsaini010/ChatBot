@@ -70,7 +70,7 @@ export default function Sidebar({
               </button>
 
               {openMenuId === s.id && (
-                <div className="absolute right-2 top-10 bg-[#1b1b1b] border border-[#2a2a2a] rounded-lg shadow-lg z-50 py-1 min-w-[120px]">
+                <div className="absolute right-2 top-10 bg-[#1b1b1b] border border-[#2a2a2a] rounded-lg shadow-lg z-50 py-1 min-w-30">
                   <button
                     onClick={(e) => handleDelete(e, s.id)}
                     className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-[#151515] flex items-center gap-2"
