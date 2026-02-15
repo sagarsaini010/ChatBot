@@ -11,7 +11,7 @@ export default function Input() {
     if (!message.trim()) return;
 
     const currentMessage = message; // backup
-    setMessage(""); // ✅ input turant empty
+    setMessage(""); // input turant empty
     setMessages((prev) => [...prev, currentMessage]);
     setLoading(true);
 

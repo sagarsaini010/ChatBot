@@ -300,7 +300,7 @@ const generateTitleFromMessage = (text) =>
 
  return (
   <div className="h-screen flex bg-[#0f0f10] text-gray-100">
-    {/* 🔥 MOBILE SIDEBAR - CONDITIONAL RENDER */}
+    {/* MOBILE SIDEBAR - CONDITIONAL RENDER */}
     {showSidebar && (
       <>
         {/* Backdrop - Click to close */}

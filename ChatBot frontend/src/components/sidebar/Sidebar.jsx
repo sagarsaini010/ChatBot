@@ -32,7 +32,7 @@ export default function Sidebar({
           <div className="text-xs uppercase tracking-[0.2em] text-gray-500">
             Workspace
           </div>
-          <div className="text-lg font-semibold text-gray-100">ChatBot</div>
+          <div className="text-lg font-semibold text-gray-100">Astra AI</div>
         </div>
       </div>
 
@@ -46,7 +46,7 @@ export default function Sidebar({
       <div className="text-xs text-gray-400 mb-2">Chats</div>
 
       <div className="flex-1 overflow-y-auto space-y-1">
-        {/* 🔥 LOADING STATE */}
+        {/*  LOADING STATE */}
         {isLoading ? (
           <div className="text-xs text-gray-500 text-center py-4">
             Loading chats...
